@@ -18,25 +18,6 @@ type Block struct {
 	Nonce int 
 }
 
-type TransactionOut struct {
-	Id string
-	Index string
-	Address string
-	Amount int
-} 
-
-type TransactionIn struct {
-	TransactionOutId string
-	TransactionOutIndex string
-	Signature string
-}
-
-type Transaction struct {
-	Id string
-	Inputs []TransactionIn
-	Outputs []TransactionOut
-}
-
 const BLOCK_GENERATION_INTERVAL = 10
 const DIFFICULTY_ADJUSTMENT_INTERVAL = 10
 
