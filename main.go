@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"crypto/sha256"
 	"time"
 	"encoding/hex"
 	"strings"
+	"./utils"
 )
 
 type Block struct {
@@ -33,13 +33,15 @@ func main() {
 	node()
 }
 
-func calculateHash(blockString string) string {
-	h := sha256.New()
+/*func CalculateHash(blockString string) string {
+	/*h := sha256.New()
 	h.Write([]byte(blockString))
-	sum := h.Sum(nil)
+	sum := h.Sum(nil)*//*
+	strAsBytes := []byte(blockString)
+	sum := sha256.Sum256(strAsBytes)
 	//fmt.Printf("%x", sum)
-	return hex.EncodeToString(sum)
-}
+	return hex.EncodeToString(sum[:])
+}*/
 
 func getDifficulty() int {
 	lastBlock := getLatestBlock()
@@ -108,7 +110,7 @@ func generateGenesisBlock() Block {
 	fmt.Println(timestamp)
 
 	blockString := buildBlockString(index, timestamp, prevHash, data, nonce, difficulty)
-	hash := calculateHash(blockString)
+	hash := utils.CalculateHash(blockString)
 
 	hashMatchesDifficulty(hash, difficulty)
 
@@ -124,7 +126,7 @@ func generateGenesisBlock() Block {
 }
 
 func isValidNewBlock(prevBlock Block, block Block) bool {
-	calculatedHash := calculateHash(buildBlockString(block.Index, block.Timestamp, block.PrevHash, block.Data, block.Nonce, block.Difficulty))
+	calculatedHash := utils.CalculateHash(buildBlockString(block.Index, block.Timestamp, block.PrevHash, block.Data, block.Nonce, block.Difficulty))
 
 	if (block.Index != prevBlock.Index + 1 || block.PrevHash != prevBlock.Hash || calculatedHash != block.Hash) {
 		return false
@@ -161,7 +163,7 @@ func addBlockToChain(newBlock Block) bool {
 	timestamp := getTimestamp()
 
 	blockString := buildBlockString(index, timestamp, prevHash, data)
-	hash := calculateHash(blockString)
+	hash := utils.CalculateHash(blockString)
 
 	return Block{Index: index, Timestamp: timestamp, PrevHash: prevHash, Hash: hash, Data: data}
 }*/
@@ -176,11 +178,11 @@ func mineBlock(data string) Block {
 	difficulty := getDifficulty()
 	nonce := 0
 
-	hash := calculateHash(buildBlockString(index, timestamp, prevHash, data, nonce, difficulty))
+	hash := utils.CalculateHash(buildBlockString(index, timestamp, prevHash, data, nonce, difficulty))
 
 	for !hashMatchesDifficulty(hash, difficulty) {
 		nonce += 1
-		hash = calculateHash(buildBlockString(index, timestamp, prevHash, data, nonce, difficulty))
+		hash = utils.CalculateHash(buildBlockString(index, timestamp, prevHash, data, nonce, difficulty))
 	}
 
 	return Block{

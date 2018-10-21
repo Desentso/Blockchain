@@ -1,9 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"crypto/sha256"
 	"crypto"
 	"crypto/rsa"
+	"crypto/rand"
+	"encoding/hex"
+	"../utils"
 )
 
 type TransactionOut struct {
@@ -25,16 +29,62 @@ type Transaction struct {
 	Outputs []TransactionOut
 }
 
-var PendingTransactions []Transaction
 var UnspentTransactionsOut []TransactionOut
+var privateKey  *rsa.PrivateKey
+
+func main() {
+	privateKey = createNewPrivateKey()
+	fmt.Println(string(utils.PublicKeyToBytes(&privateKey.PublicKey)))
+	fmt.Println(string(utils.PrivateKeyToBytes(privateKey)))
+
+	UnspentTransactionsOut = []TransactionOut{TransactionOut{Id: "id", Index: "index", Address: "123", Amount: 100}}
+
+	createNewTransaction("abc", "123", 100)
+}
+
+func createNewPrivateKey() *rsa.PrivateKey {
+	privateKey, _ := rsa.GenerateKey(rand.Reader, 512)
+	return privateKey
+}
+
+/*func PublicKeyToBytes(pub *rsa.PublicKey) []byte {
+	pubASN1, err := x509.MarshalPKIXPublicKey(pub)
+	if err != nil {
+		fmt.Println("Error while converting public key to bytes")
+	}
+	pubBytes := pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PUBLIC KEY",
+		Bytes: pubASN1,
+	})
+
+	return pubBytes
+}
+
+func PrivateKeyToBytes(priv *rsa.PrivateKey) []byte {
+	privBytes := pem.EncodeToMemory(
+		&pem.Block{
+			Type:  "RSA PRIVATE KEY",
+			Bytes: x509.MarshalPKCS1PrivateKey(priv),
+		},
+	)
+
+	return privBytes
+}
+
+func calculateHash(blockString string) string {
+	strAsBytes := []byte(blockString)
+	sum := sha256.Sum256(strAsBytes)
+
+	return hex.EncodeToString(sum[:])
+}*/
 
 func createNewTransaction(to string, from string, amount int) {
 	unspentTransactions, leftOverAmount := findUnspentTransactionsFor(from, amount)
 	
 	if len(unspentTransactions) == 0 {
-		
+		fmt.Println("Not enough unspent transactions")
 	} else {
-		var unSignedTransactionsIn []TransactionIn
+		var unSignedTransactionsIn []*TransactionIn
 		for _, txOut := range unspentTransactions {
 			unSignedTransactionsIn = append(unSignedTransactionsIn, createUnsignedTransactionIn(txOut))
 		}
@@ -44,8 +94,11 @@ func createNewTransaction(to string, from string, amount int) {
 		transaction.Outputs = transactionsOut
 		transaction.Id = getTransactionHash(transactionsOut, unSignedTransactionsIn)
 
-		transaction.Inputs = signTransactionsIn(unSignedTransactionsIn)
+		transaction.Inputs = signTransactionsIn(transaction, unSignedTransactionsIn)
+
+		fmt.Println(transaction)
 	}
+
 }
 
 func findUnspentTransactionsFor(fromAddr string, amount int) ([]TransactionOut, int) {
@@ -70,9 +123,9 @@ func findUnspentTransactionsFor(fromAddr string, amount int) ([]TransactionOut, 
 	return found, leftOver
 }	
 
-func createUnsignedTransactionIn(unspentTransaction TransactionOut) TransactionIn {
+func createUnsignedTransactionIn(unspentTransaction TransactionOut) *TransactionIn {
 
-	return TransactionIn{
+	return &TransactionIn{
 		TransactionOutId: unspentTransaction.Id,
 		TransactionOutIndex: unspentTransaction.Index,
 	}
@@ -98,19 +151,26 @@ func createNewTransactionsOut(from string, to string, amount int, leftOverAmount
 	return txsOut
 }
 
-func signTransactionsIn(unsigned []TransactionIn) []TransactionIn {
+func signTransactionsIn(transaction Transaction, unsigned []*TransactionIn) []TransactionIn {
+	values := []TransactionIn{}
 	for _, txIn := range unsigned {
-		signTransactionIn()
+		signature := signTransactionIn(privateKey, transaction)
+		fmt.Println("Signature: ", signature)
+		txIn.Signature = signature
+		values = append(values, *txIn)
 	}
+
+	return values
 }
 
-func signTransactionIn() {
-	stringAsBytes := []byte("test 123")
+func signTransactionIn(privateKey *rsa.PrivateKey, transaction Transaction) string {
+	stringAsBytes := []byte(transaction.Id)
 	hash := sha256.Sum256(stringAsBytes)
 	signature, _ := rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA256, hash[:])
+	return hex.EncodeToString(signature)
 }
 
-func getTransactionHash(transactionsOut []TransactionOut, transactionsIn []TransactionIn) string {
+func getTransactionHash(transactionsOut []TransactionOut, transactionsIn []*TransactionIn) string {
 	combinedString := ""
 	
 	for _, txOut := range transactionsOut {
@@ -121,6 +181,5 @@ func getTransactionHash(transactionsOut []TransactionOut, transactionsIn []Trans
 		combinedString += (txIn.TransactionOutId + string(txIn.TransactionOutIndex))
 	}
 
-	return calculateHash(combinedString)
+	return utils.CalculateHash(combinedString)
 }
-
