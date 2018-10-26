@@ -63,7 +63,12 @@ func newTransaction(w http.ResponseWriter, r *http.Request) {
 		panic(err)
     }
     
-
+    resp := createNewTransaction(body.To, body.From, body.Amount)
+    if resp {
+        fmt.Fprintf(w, "Added to transaction pool.")
+    } else {
+        fmt.Fprintf(w, "Not enough balance.")
+    }
 }
 
 func node() {

@@ -10,6 +10,9 @@ import (
 	"../utils"
 )
 
+//https://play.golang.org/p/dx37I-1g0ga
+//https://gist.github.com/miguelmota/3ea9286bd1d3c2a985b67cac4ba2130a
+
 type TransactionOut struct {
 	Id string
 	Index string

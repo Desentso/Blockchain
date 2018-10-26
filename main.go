@@ -12,6 +12,7 @@ type Block struct {
 	Timestamp int64 `json:"timestamp"`
 	Index int `json:"index"`
 	Data string `json:"data"`
+	Transactions []Transaction `json:"transactions"`
 	Hash string `json:"hash"`
 	PrevHash string `json:"prevHash"`
 	Difficulty int 
@@ -20,6 +21,7 @@ type Block struct {
 
 const BLOCK_GENERATION_INTERVAL = 10
 const DIFFICULTY_ADJUSTMENT_INTERVAL = 10
+const BLOCK_REWARD_AMOUNT = 50
 
 var Blockchain []Block
 
@@ -29,7 +31,8 @@ func main() {
 	fmt.Println(Blockchain)
 	//Blockchain = append(Blockchain, generateNewBlock("Block number 2"))
 	//fmt.Println(Blockchain)
-
+	
+	transactionTest()
 	node()
 }
 
@@ -92,8 +95,8 @@ func getTimestamp() int64 {
 	return time.Now().UnixNano() / (int64(time.Millisecond) / int64(time.Nanosecond))
 }
 
-func buildBlockString(index int, timestamp int64, prevHash string, data string, nonce int, difficulty int) string {
-	return fmt.Sprintf("%d, %d, %s, %s, %d, %d", index, timestamp, prevHash, data, nonce, difficulty)
+func buildBlockString(index int, timestamp int64, prevHash string, data string, nonce int, difficulty int, transactions []Transaction) string {
+	return fmt.Sprintf("%d, %d, %s, %s, %d, %d, %v\n", index, timestamp, prevHash, data, nonce, difficulty, transactions)
 }
 
 func getLatestBlock() Block {
@@ -109,7 +112,7 @@ func generateGenesisBlock() Block {
 	difficulty := 1
 	fmt.Println(timestamp)
 
-	blockString := buildBlockString(index, timestamp, prevHash, data, nonce, difficulty)
+	blockString := buildBlockString(index, timestamp, prevHash, data, nonce, difficulty, []Transaction{})
 	hash := utils.CalculateHash(blockString)
 
 	hashMatchesDifficulty(hash, difficulty)
@@ -126,7 +129,7 @@ func generateGenesisBlock() Block {
 }
 
 func isValidNewBlock(prevBlock Block, block Block) bool {
-	calculatedHash := utils.CalculateHash(buildBlockString(block.Index, block.Timestamp, block.PrevHash, block.Data, block.Nonce, block.Difficulty))
+	calculatedHash := utils.CalculateHash(buildBlockString(block.Index, block.Timestamp, block.PrevHash, block.Data, block.Nonce, block.Difficulty, block.Transactions))
 
 	if (block.Index != prevBlock.Index + 1 || block.PrevHash != prevBlock.Hash || calculatedHash != block.Hash) {
 		return false
@@ -148,11 +151,24 @@ func isValidBlockchain(blockchain []Block) bool {
 func addBlockToChain(newBlock Block) bool {
 	if isValidNewBlock(getLatestBlock(), newBlock) {
 		Blockchain = append(Blockchain, newBlock)
+		//UnspentTransactionsOut = append(UnspentTransactionsOut, reward)
 		fmt.Println("Found new block! Difficulty: ", newBlock.Difficulty, " , Hash: ", newBlock.Hash)
 		return true
 	}
 
 	return false
+}
+
+func minerReward(address string) Transaction {
+	reward := TransactionOut{Amount: BLOCK_REWARD_AMOUNT, Address: address, Index: string(len(Blockchain))}
+	transactionsOut := []TransactionOut{reward}
+
+	var transaction Transaction
+	transaction.Outputs = transactionsOut
+	transaction.Inputs = []TransactionIn{}
+	transaction.Id = GetTransactionHash(transactionsOut, []*TransactionIn{})
+
+	return transaction
 }
 
 /*func generateNewBlock(data string, nonce int) Block {
@@ -177,12 +193,13 @@ func mineBlock(data string) Block {
 	timestamp := getTimestamp()
 	difficulty := getDifficulty()
 	nonce := 0
-
-	hash := utils.CalculateHash(buildBlockString(index, timestamp, prevHash, data, nonce, difficulty))
+	transactions := []Transaction{minerReward(string(utils.PublicKeyToBytes(PublicKey)))}
+	
+	hash := utils.CalculateHash(buildBlockString(index, timestamp, prevHash, data, nonce, difficulty, transactions))
 
 	for !hashMatchesDifficulty(hash, difficulty) {
 		nonce += 1
-		hash = utils.CalculateHash(buildBlockString(index, timestamp, prevHash, data, nonce, difficulty))
+		hash = utils.CalculateHash(buildBlockString(index, timestamp, prevHash, data, nonce, difficulty, transactions))
 	}
 
 	return Block{
@@ -193,5 +210,6 @@ func mineBlock(data string) Block {
 		Data: data,
 		Nonce: nonce,
 		Difficulty: difficulty,
+		Transactions: transactions,
 	}
 }
