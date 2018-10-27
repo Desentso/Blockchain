@@ -152,6 +152,8 @@ func addBlockToChain(newBlock Block) bool {
 	if isValidNewBlock(getLatestBlock(), newBlock) {
 		Blockchain = append(Blockchain, newBlock)
 		//UnspentTransactionsOut = append(UnspentTransactionsOut, reward)
+		updateTransactions(newBlock)
+
 		fmt.Println("Found new block! Difficulty: ", newBlock.Difficulty, " , Hash: ", newBlock.Hash)
 		return true
 	}
@@ -160,7 +162,7 @@ func addBlockToChain(newBlock Block) bool {
 }
 
 func minerReward(address string) Transaction {
-	reward := TransactionOut{Amount: BLOCK_REWARD_AMOUNT, Address: address, Index: string(len(Blockchain))}
+	reward := TransactionOut{Amount: BLOCK_REWARD_AMOUNT, ToAddress: address, Index: string(len(Blockchain)), Unspent: true}
 	transactionsOut := []TransactionOut{reward}
 
 	var transaction Transaction
@@ -169,6 +171,25 @@ func minerReward(address string) Transaction {
 	transaction.Id = GetTransactionHash(transactionsOut, []*TransactionIn{})
 
 	return transaction
+}
+
+func updateTransactions(block Block) {
+	for _, transaction := range block.Transactions {
+		for i, txOut := range transaction.Outputs {
+			if txOut.Unspent {
+				UnspentTransactionsOut = append(UnspentTransactionsOut, txOut)
+			} else {
+				newTxOut := TransactionOut{Id: transaction.Id, Index: string(i), ToAddress: txOut.ToAddress, Amount: txOut.Amount}
+				UnspentTransactionsOut = append(UnspentTransactionsOut, newTxOut)
+			}
+		}
+
+		for index, pendingTx := range PendingTransactions {
+			if pendingTx.Id == transaction.Id {
+				PendingTransactions = append(PendingTransactions[:index], PendingTransactions[index+1:]...)
+			}
+		}
+	}
 }
 
 /*func generateNewBlock(data string, nonce int) Block {
@@ -194,7 +215,8 @@ func mineBlock(data string) Block {
 	difficulty := getDifficulty()
 	nonce := 0
 	transactions := []Transaction{minerReward(string(utils.PublicKeyToBytes(PublicKey)))}
-	
+	transactions = append(transactions, PendingTransactions...)
+
 	hash := utils.CalculateHash(buildBlockString(index, timestamp, prevHash, data, nonce, difficulty, transactions))
 
 	for !hashMatchesDifficulty(hash, difficulty) {

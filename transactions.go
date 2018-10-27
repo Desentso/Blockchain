@@ -14,10 +14,11 @@ import (
 //https://gist.github.com/miguelmota/3ea9286bd1d3c2a985b67cac4ba2130a
 
 type TransactionOut struct {
-	Id string
-	Index string
-	Address string
+	Id string // Id of transaction
+	Index string // Used to make the hashes unique
+	ToAddress string // Address that to coins belong (Unspent) or are sent (When spending)
 	Amount int
+	Unspent bool // True means that the coins belong to ToAddress
 } 
 
 type TransactionIn struct {
@@ -43,7 +44,7 @@ func transactionTest() {
 	fmt.Println(string(utils.PublicKeyToBytes(PublicKey)))
 	fmt.Println(string(utils.PrivateKeyToBytes(PrivateKey)))
 
-	//UnspentTransactionsOut = []TransactionOut{TransactionOut{Id: "id", Index: "index", Address: "123", Amount: 100}}
+	//UnspentTransactionsOut = []TransactionOut{TransactionOut{Id: "id", Index: "index", ToAddress: "123", Amount: 100}}
 
 	//createNewTransaction("abc", "123", 100)
 }
@@ -85,7 +86,7 @@ func findUnspentTransactionsFor(fromAddr string, amount int) ([]TransactionOut, 
 	amountFound := 0
 
 	for _, txOut := range UnspentTransactionsOut {
-		if txOut.Address == fromAddr {
+		if txOut.ToAddress == fromAddr {
 			found = append(found, txOut)
 			amountFound += txOut.Amount
 		}
@@ -113,15 +114,16 @@ func createNewTransactionsOut(from string, to string, amount int, leftOverAmount
 
 	txsOut := []TransactionOut{
 		TransactionOut{
-			Address: to,
+			ToAddress: to,
 			Amount: amount,
 		},
 	}
 
 	if leftOverAmount > 0 {
 		leftOverTxOut := TransactionOut{
-			Address: from,
+			ToAddress: from,
 			Amount: leftOverAmount,
+			Unspent: true,
 		}
 		txsOut = append(txsOut, leftOverTxOut)
 	} 
@@ -152,7 +154,7 @@ func GetTransactionHash(transactionsOut []TransactionOut, transactionsIn []*Tran
 	combinedString := ""
 	
 	for _, txOut := range transactionsOut {
-		combinedString += (txOut.Address + string(txOut.Amount))
+		combinedString += (txOut.ToAddress + string(txOut.Amount))
 	}
 
 	for _, txIn := range transactionsIn {

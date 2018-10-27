@@ -71,6 +71,12 @@ func newTransaction(w http.ResponseWriter, r *http.Request) {
     }
 }
 
+func getTransactionPool(w http.ResponseWriter, r *http.Request) {
+    resp, _ := json.Marshal(PendingTransactions)
+
+    fmt.Fprintf(w, string(resp))
+}
+
 func node() {
 
      // Set routes
@@ -78,6 +84,7 @@ func node() {
     http.HandleFunc("/blockchain", getBlockchain)
     http.HandleFunc("/mineblock", postBlock)
     http.HandleFunc("/newTransaction", newTransaction)
+    http.HandleFunc("/transactions", getTransactionPool)
 
     // Start server
     err := http.ListenAndServe(":9090", nil)
