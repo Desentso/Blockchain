@@ -54,12 +54,12 @@ func createNewPrivateKey() *rsa.PrivateKey {
 	return PrivateKey
 }
 
-func createNewTransaction(to string, from string, amount int) bool {
+func createNewTransaction(to string, from string, amount int) (bool, string) {
 	unspentTransactions, leftOverAmount := findUnspentTransactionsFor(from, amount)
 	
 	if len(unspentTransactions) == 0 {
-		fmt.Println("Not enough unspent transactions")
-		return false
+		fmt.Println("Couldn't find enough unspent transactions")
+		return false, "Couldn't find enough unspent transactions"
 	} else {
 		var unSignedTransactionsIn []*TransactionIn
 		for _, txOut := range unspentTransactions {
@@ -73,11 +73,14 @@ func createNewTransaction(to string, from string, amount int) bool {
 
 		transaction.Inputs = signTransactionsIn(transaction, unSignedTransactionsIn)
 
-		PendingTransactions = append(PendingTransactions, transaction)
-		fmt.Println(transaction)
-		return true
+		if ValidateTransaction(transaction) && ValidTransactionToPool(transaction) {
+			PendingTransactions = append(PendingTransactions, transaction)
+			fmt.Println(transaction)
+			return true, ""
+		} else {
+			return false, "Invalid transaction"
+		}
 	}
-
 }
 
 func findUnspentTransactionsFor(fromAddr string, amount int) ([]TransactionOut, int) {
@@ -147,6 +150,7 @@ func signTransactionIn(PrivateKey *rsa.PrivateKey, transaction Transaction) stri
 	stringAsBytes := []byte(transaction.Id)
 	hash := sha256.Sum256(stringAsBytes)
 	signature, _ := rsa.SignPKCS1v15(rand.Reader, PrivateKey, crypto.SHA256, hash[:])
+	fmt.Println("Transaction ID:", transaction.Id, "\nHash: ", hash, "\nSignature:", hex.EncodeToString(signature))
 	return hex.EncodeToString(signature)
 }
 
@@ -162,4 +166,102 @@ func GetTransactionHash(transactionsOut []TransactionOut, transactionsIn []*Tran
 	}
 
 	return utils.CalculateHash(combinedString)
+}
+
+
+// Validation
+func ValidTransactionToPool(transaction Transaction) bool {
+	for _, txIn := range transaction.Inputs {
+		if isAlreadyPending(txIn) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func ValidateTransactions(transactions []Transaction) bool {
+	
+	for _, transaction := range transactions[1:] {
+		if !ValidateTransaction(transaction) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func ValidateTransaction(transaction Transaction) bool {
+
+	txInAmount := 0
+	txOutAmount := 0
+
+	for _, txIn := range transaction.Inputs {
+		if !validateTxIn(transaction, txIn) {
+			return false
+		}
+		txOut,_ := findReferencedTxOut(txIn)
+		txInAmount += txOut.Amount
+	}
+
+	for _, txOut := range transaction.Outputs {
+		txOutAmount += txOut.Amount
+	}
+
+	if txInAmount != txOutAmount {
+		return false
+	}
+
+	return true
+}
+
+func validateTxIn(transaction Transaction, txIn TransactionIn) bool {
+
+	referencedTxOut, foundReferencedTxOut := findReferencedTxOut(txIn)
+
+	// Verify the signature, i.e. the coins belong to the spender
+	if foundReferencedTxOut {
+		publicKey := utils.BytesToPublicKey([]byte(referencedTxOut.ToAddress))
+
+		stringAsBytes := []byte(transaction.Id)
+		txIdhash := sha256.Sum256(stringAsBytes)
+
+		decodedSig, _ := hex.DecodeString(txIn.Signature)
+
+		invalidSignature := rsa.VerifyPKCS1v15(publicKey, crypto.SHA256, txIdhash[:], decodedSig)
+
+		if invalidSignature != nil {
+			fmt.Println("Invalid Signature", transaction.Id, txIn)
+			return false
+		} else {
+			return true
+		}
+	} else {
+		return false
+	}
+}
+
+func findReferencedTxOut(txIn TransactionIn) (TransactionOut, bool) {
+	// Find the referenced unspent transaction out
+	for _, unSpentTxOut := range UnspentTransactionsOut {
+		if unSpentTxOut.Id == txIn.TransactionOutId && unSpentTxOut.Index == txIn.TransactionOutIndex {
+			return unSpentTxOut, true
+		}
+	}
+
+	return TransactionOut{}, false
+}
+
+func isAlreadyPending(txIn TransactionIn) bool {
+
+	for _, tx := range PendingTransactions {
+		for _, pendingTxIn := range tx.Inputs {
+			if (txIn.TransactionOutId == pendingTxIn.TransactionOutId && 
+				txIn.TransactionOutIndex == pendingTxIn.TransactionOutIndex) {
+					return true
+			}
+		}
+	}
+
+	return false
 }

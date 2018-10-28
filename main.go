@@ -135,6 +135,10 @@ func isValidNewBlock(prevBlock Block, block Block) bool {
 		return false
 	}
 
+	if !ValidateTransactions(block.Transactions) {
+		return false
+	}
+
 	return true
 }
 
@@ -149,7 +153,7 @@ func isValidBlockchain(blockchain []Block) bool {
 }
 
 func addBlockToChain(newBlock Block) bool {
-	if isValidNewBlock(getLatestBlock(), newBlock) {
+	if isValidNewBlock(getLatestBlock(), newBlock) && ValidateTransactions(newBlock.Transactions) {
 		Blockchain = append(Blockchain, newBlock)
 		//UnspentTransactionsOut = append(UnspentTransactionsOut, reward)
 		updateTransactions(newBlock)
@@ -162,7 +166,12 @@ func addBlockToChain(newBlock Block) bool {
 }
 
 func minerReward(address string) Transaction {
-	reward := TransactionOut{Amount: BLOCK_REWARD_AMOUNT, ToAddress: address, Index: string(len(Blockchain)), Unspent: true}
+	reward := TransactionOut{
+		Amount: BLOCK_REWARD_AMOUNT, 
+		ToAddress: address, 
+		Index: string(len(Blockchain)), 
+		Unspent: true,
+	}
 	transactionsOut := []TransactionOut{reward}
 
 	var transaction Transaction
@@ -174,16 +183,26 @@ func minerReward(address string) Transaction {
 }
 
 func updateTransactions(block Block) {
+	consumedTxOuts := []TransactionOut{}
+
 	for _, transaction := range block.Transactions {
+		// Add the new unspent transactions
 		for i, txOut := range transaction.Outputs {
-			if txOut.Unspent {
-				UnspentTransactionsOut = append(UnspentTransactionsOut, txOut)
-			} else {
-				newTxOut := TransactionOut{Id: transaction.Id, Index: string(i), ToAddress: txOut.ToAddress, Amount: txOut.Amount}
-				UnspentTransactionsOut = append(UnspentTransactionsOut, newTxOut)
+			newTxOut := TransactionOut{Id: transaction.Id, Index: string(i), ToAddress: txOut.ToAddress, Amount: txOut.Amount}
+			UnspentTransactionsOut = append(UnspentTransactionsOut, newTxOut)
+		}
+		
+		// Remove spent txOuts from unspent
+		for _, txIn := range transaction.Inputs {
+			consumedTxOuts = append(consumedTxOuts, )
+			for index, unspentTxOut := range UnspentTransactionsOut {
+				if unspentTxOut.Id == txIn.TransactionOutId && unspentTxOut.Index == txIn.TransactionOutIndex {
+					UnspentTransactionsOut = append(UnspentTransactionsOut[:index], UnspentTransactionsOut[index+1:]...)
+				}
 			}
 		}
 
+		// Remove transaction from pending transactions
 		for index, pendingTx := range PendingTransactions {
 			if pendingTx.Id == transaction.Id {
 				PendingTransactions = append(PendingTransactions[:index], PendingTransactions[index+1:]...)
@@ -191,20 +210,6 @@ func updateTransactions(block Block) {
 		}
 	}
 }
-
-/*func generateNewBlock(data string, nonce int) Block {
-	prevBlock := getLatestBlock()
-
-	index := prevBlock.Index + 1
-	prevHash := prevBlock.Hash
-	timestamp := getTimestamp()
-
-	blockString := buildBlockString(index, timestamp, prevHash, data)
-	hash := utils.CalculateHash(blockString)
-
-	return Block{Index: index, Timestamp: timestamp, PrevHash: prevHash, Hash: hash, Data: data}
-}*/
-
 
 func mineBlock(data string) Block {
 	prevBlock := getLatestBlock()
