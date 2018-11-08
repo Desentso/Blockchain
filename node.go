@@ -5,6 +5,7 @@ import (
     "bytes"
     "net/http"
     "encoding/json"
+    "os"
 )
 
 type NewBlockRequest struct {
@@ -20,6 +21,11 @@ type NewTransactionRequest struct {
 type Peer struct {
     Address string `json:"address"`
     Port string `json:"port"`
+}
+
+type BlockBroadcast struct {
+    Block Block `json:"block"`
+    Peer Peer `json:"peer"`
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
@@ -113,6 +119,7 @@ func addPeer(w http.ResponseWriter, r *http.Request) {
     err := decoder.Decode(&body)
 
 	if err != nil {
+        fmt.Println(err)
 		panic(err)
     }
     
@@ -141,8 +148,12 @@ func node() {
     http.HandleFunc("/addPeer", addPeer)
     http.HandleFunc("/newBlock", newBlockFromNode)
 
+    port := "9090"
+    if len(os.Args) > 1 {
+        port = os.Args[1]
+    }
     // Start server
-    err := http.ListenAndServe(":9090", nil)
+    err := http.ListenAndServe(":" + port, nil)
     if err != nil {
         fmt.Println(err)
     }
@@ -152,11 +163,17 @@ func node() {
 // Broadcast
 func broadcastNewBlock(block Block) {
     for _, peer := range Peers {
-        jsonPeer, _ := json.Marshal(peer)
+        data := BlockBroadcast{
+            Block: block, 
+            Peer: peer,
+        }
+        jsonPeer, _ := json.Marshal(data)
         url := peer.Address + ":" + peer.Port + "/newBlock"
         req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonPeer))
         req.Header.Set("Content-Type", "application/json")
         
+        fmt.Println("Broadcasted block to ", peer)
+
         client := &http.Client{}
         _, err := client.Do(req)
         if err != nil {
@@ -168,14 +185,39 @@ func broadcastNewBlock(block Block) {
 func newBlockFromNode(w http.ResponseWriter, r *http.Request) {
     decoder := json.NewDecoder(r.Body)
 
-    var newBlock Block
+    var newBlock BlockBroadcast
     err := decoder.Decode(&newBlock)
 
     if err != nil {
 		panic(err)
     }
 
-    addBlockToChain(newBlock)
+    added := addBlockToChain(newBlock.Block)
+    if !added && newBlock.Block.Index > getLatestBlock().Index {
+        peerUrl := newBlock.Peer.Address + ":" + newBlock.Peer.Port + "/blockchain"
+        resp, err := http.Get(peerUrl)
+
+        if err != nil {
+            fmt.Println(err)
+            panic(err)
+        }
+
+        defer resp.Body.Close()
+
+        decoder := json.NewDecoder(resp.Body)
+
+        var data []Block
+        decode_err := decoder.Decode(&data)
+
+        if decode_err != nil {
+            fmt.Println(decode_err)
+            panic(decode_err)
+        }
+
+        fmt.Println("Fetched blockchain")
+    }
+
+    //fmt.Println("New block: ", newBlock)
 
     fmt.Fprintf(w, "ok")
 }
