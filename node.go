@@ -28,6 +28,11 @@ type BlockBroadcast struct {
     Peer Peer `json:"peer"`
 }
 
+type TransactionBroadcast struct {
+    Transaction Transaction `json:"transaction"`
+    Peer Peer `json:"peer"`
+}
+
 func index(w http.ResponseWriter, r *http.Request) {
 
     fmt.Fprintf(w, "Blockchain test") // send data to client side
@@ -76,8 +81,9 @@ func newTransaction(w http.ResponseWriter, r *http.Request) {
 		panic(err)
     }
     
-    resp, errText := createNewTransaction(body.To, body.From, body.Amount)
+    resp, errText, transaction := createNewTransaction(body.To, body.From, body.Amount)
     if resp {
+        broadcastNewTransaction(transaction)
         fmt.Fprintf(w, "Added to transaction pool.")
     } else {
         fmt.Fprintf(w, errText)
@@ -131,6 +137,7 @@ func addPeer(w http.ResponseWriter, r *http.Request) {
 }
 
 var Peers []Peer
+var ThisPeer Peer
 
 func node() {
 
@@ -145,13 +152,18 @@ func node() {
     http.HandleFunc("/balances", getBalances)
 
     http.HandleFunc("/peers", getPeers)
-    http.HandleFunc("/addPeer", addPeer)
-    http.HandleFunc("/newBlock", newBlockFromNode)
+
+    http.HandleFunc("/peer", addPeer)
+    http.HandleFunc("/peer/block", newBlockFromPeer)
+    http.HandleFunc("/peer/transaction", newTransactionFromPeer)
 
     port := "9090"
     if len(os.Args) > 1 {
         port = os.Args[1]
     }
+
+    ThisPeer = Peer{Address: "http://localhost", Port: port}
+
     // Start server
     err := http.ListenAndServe(":" + port, nil)
     if err != nil {
@@ -161,18 +173,14 @@ func node() {
 
 
 // Broadcast
-func broadcastNewBlock(block Block) {
+func broadcast(data interface{}, endpoint string) {
     for _, peer := range Peers {
-        data := BlockBroadcast{
-            Block: block, 
-            Peer: peer,
-        }
         jsonPeer, _ := json.Marshal(data)
-        url := peer.Address + ":" + peer.Port + "/newBlock"
+        url := peer.Address + ":" + peer.Port + endpoint
         req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonPeer))
         req.Header.Set("Content-Type", "application/json")
         
-        fmt.Println("Broadcasted block to ", peer)
+        fmt.Println("Broadcasted ", endpoint , " to ", peer)
 
         client := &http.Client{}
         _, err := client.Do(req)
@@ -182,7 +190,23 @@ func broadcastNewBlock(block Block) {
     }
 }
 
-func newBlockFromNode(w http.ResponseWriter, r *http.Request) {
+func broadcastNewBlock(block Block) {
+    data := BlockBroadcast{
+        Block: block, 
+        Peer: ThisPeer,
+    }
+    broadcast(data, "/peer/block")
+}
+
+func broadcastNewTransaction(transaction Transaction) {
+    data := TransactionBroadcast{
+        Transaction: transaction, 
+        Peer: ThisPeer,
+    }
+    broadcast(data, "/peer/transaction")
+}
+
+func newBlockFromPeer(w http.ResponseWriter, r *http.Request) {
     decoder := json.NewDecoder(r.Body)
 
     var newBlock BlockBroadcast
@@ -194,30 +218,63 @@ func newBlockFromNode(w http.ResponseWriter, r *http.Request) {
 
     added := addBlockToChain(newBlock.Block)
     if !added && newBlock.Block.Index > getLatestBlock().Index {
-        peerUrl := newBlock.Peer.Address + ":" + newBlock.Peer.Port + "/blockchain"
-        resp, err := http.Get(peerUrl)
-
-        if err != nil {
-            fmt.Println(err)
-            panic(err)
+        getBlockchainFromPeer(newBlock.Peer)
+        UnspentTransactionsOut = []TransactionOut{}
+        for _, block := range Blockchain {
+            updateTransactions(block)
         }
-
-        defer resp.Body.Close()
-
-        decoder := json.NewDecoder(resp.Body)
-
-        var data []Block
-        decode_err := decoder.Decode(&data)
-
-        if decode_err != nil {
-            fmt.Println(decode_err)
-            panic(decode_err)
-        }
-
-        fmt.Println("Fetched blockchain")
     }
-
-    //fmt.Println("New block: ", newBlock)
 
     fmt.Fprintf(w, "ok")
 }
+
+func getBlockchainFromPeer(peer Peer) {
+    fmt.Println("Trying to fetch blockchain from peer: ", peer)
+    peerUrl := peer.Address + ":" + peer.Port + "/blockchain"
+
+    client := &http.Client{}
+    req, _ := http.NewRequest("GET", peerUrl, nil)
+    req.Header.Set("Content-Type", "application/json")
+    resp, err := client.Do(req)
+
+    if err != nil {
+        fmt.Println(err)
+        panic(err)
+    }
+
+    defer resp.Body.Close()
+
+    decoder := json.NewDecoder(resp.Body)
+
+    var data []Block
+    decode_err := decoder.Decode(&data)
+
+    if decode_err != nil {
+        fmt.Println(decode_err)
+        panic(decode_err)
+    }
+
+    Blockchain = data
+
+    fmt.Println("Fetched blockchain, current: ", Blockchain, ",\n\n response:", data)
+}
+
+func newTransactionFromPeer(w http.ResponseWriter, r *http.Request) {
+
+    decoder := json.NewDecoder(r.Body)
+
+    var data TransactionBroadcast
+    err := decoder.Decode(&data)
+
+    if err != nil {
+		panic(err)
+    }
+
+    if ValidateTransaction(data.Transaction) {
+        PendingTransactions = append(PendingTransactions, data.Transaction)
+        fmt.Println("Added transaction, ", data.Transaction)
+    }
+
+    fmt.Fprintf(w, "ok")
+}
+

@@ -54,12 +54,12 @@ func createNewPrivateKey() *rsa.PrivateKey {
 	return PrivateKey
 }
 
-func createNewTransaction(to string, from string, amount int) (bool, string) {
+func createNewTransaction(to string, from string, amount int) (bool, string, Transaction) {
 	unspentTransactions, leftOverAmount := findUnspentTransactionsFor(from, amount)
 	
 	if len(unspentTransactions) == 0 {
 		fmt.Println("Couldn't find enough unspent transactions")
-		return false, "Couldn't find enough unspent transactions"
+		return false, "Couldn't find enough unspent transactions", Transaction{}
 	} else {
 		var unSignedTransactionsIn []*TransactionIn
 		for _, txOut := range unspentTransactions {
@@ -76,9 +76,9 @@ func createNewTransaction(to string, from string, amount int) (bool, string) {
 		if ValidateTransaction(transaction) && ValidTransactionToPool(transaction) {
 			PendingTransactions = append(PendingTransactions, transaction)
 			fmt.Println(transaction)
-			return true, ""
+			return true, "", transaction
 		} else {
-			return false, "Invalid transaction"
+			return false, "Invalid transaction", Transaction{}
 		}
 	}
 }
