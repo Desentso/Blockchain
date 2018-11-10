@@ -1,11 +1,11 @@
 # Blockchain / Cryptocurrency implementation with Go
 
-MVP implementation of a basic blockchain with Go.
+MVP implementation of a basic blockchain with Go. Still work in progress.
 
 ### Features
  - Proof-of-work algorithm mining
  - Transactions
- - Wallets with RSA private keys (WIP)
+ - Wallets with RSA private keys
  - Peer-to-peer connected nodes
    - Blockchain relaying
    - Transaction relaying

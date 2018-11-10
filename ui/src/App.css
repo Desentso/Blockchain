@@ -1,0 +1,22 @@
+
+.App {
+  text-align: center;
+}
+
+.Header {
+  background-color: #313a4b;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  font-size: 16px;
+  color: white;
+}
+
+.Header-Link {
+  color: #eee;
+  margin: 10px 0;
+}
+
+.Flex {
+  display: flex;
+}

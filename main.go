@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"time"
+	"math"
 	"encoding/hex"
 	"strings"
 	"./utils"
@@ -126,6 +127,15 @@ func generateGenesisBlock() Block {
 		Difficulty: difficulty, 
 		Nonce: nonce,
 	}
+}
+
+func CalculateCumulativeDifficulty(blockchain []Block) int {
+	difficulty := 0
+	for _, block := range blockchain {
+		difficulty += int(math.Pow(2, float64(block.Difficulty)))
+	}
+
+	return difficulty
 }
 
 func isValidNewBlock(prevBlock Block, block Block) bool {

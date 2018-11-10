@@ -121,15 +121,17 @@ func getPeers(w http.ResponseWriter, r *http.Request) {
 func addPeer(w http.ResponseWriter, r *http.Request) {
     decoder := json.NewDecoder(r.Body)
 
-    var body Peer
-    err := decoder.Decode(&body)
+    var newPeer Peer
+    err := decoder.Decode(&newPeer)
 
 	if err != nil {
         fmt.Println(err)
 		panic(err)
     }
     
-    Peers = append(Peers, body)
+    Peers = append(Peers, newPeer)
+
+    queryBlockchainFromPeer(newPeer)
 
     resp, _ := json.Marshal(Peers)
 
@@ -217,18 +219,31 @@ func newBlockFromPeer(w http.ResponseWriter, r *http.Request) {
     }
 
     added := addBlockToChain(newBlock.Block)
-    if !added && newBlock.Block.Index > getLatestBlock().Index {
-        getBlockchainFromPeer(newBlock.Peer)
-        UnspentTransactionsOut = []TransactionOut{}
-        for _, block := range Blockchain {
-            updateTransactions(block)
-        }
+    if !added {
+        queryBlockchainFromPeer(newBlock.Peer)
     }
 
     fmt.Fprintf(w, "ok")
 }
 
-func getBlockchainFromPeer(peer Peer) {
+func queryBlockchainFromPeer(peer Peer) {
+
+    data := getBlockchainFromPeer(peer)
+
+    peer_difficulty := CalculateCumulativeDifficulty(data)
+    current_difficulty := CalculateCumulativeDifficulty(Blockchain)
+
+    if peer_difficulty > current_difficulty {
+        Blockchain = data
+
+        UnspentTransactionsOut = []TransactionOut{}
+        for _, block := range Blockchain {
+            updateTransactions(block)
+        }
+    }
+}
+
+func getBlockchainFromPeer(peer Peer) []Block {
     fmt.Println("Trying to fetch blockchain from peer: ", peer)
     peerUrl := peer.Address + ":" + peer.Port + "/blockchain"
 
@@ -254,9 +269,7 @@ func getBlockchainFromPeer(peer Peer) {
         panic(decode_err)
     }
 
-    Blockchain = data
-
-    fmt.Println("Fetched blockchain, current: ", Blockchain, ",\n\n response:", data)
+    return data
 }
 
 func newTransactionFromPeer(w http.ResponseWriter, r *http.Request) {
