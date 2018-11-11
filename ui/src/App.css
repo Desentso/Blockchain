@@ -1,6 +1,10 @@
+* {
+  box-sizing: border-box;
+}
 
 .App {
   text-align: center;
+  background-color: rgb(248, 247, 243);
 }
 
 .Header {
@@ -14,7 +18,7 @@
 
 .Header-Link {
   color: #eee;
-  margin: 10px 0;
+  margin: 15px 0;
 }
 
 .Flex {

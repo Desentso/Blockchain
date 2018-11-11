@@ -6,6 +6,7 @@ import (
     "net/http"
     "encoding/json"
     "os"
+    "./utils"
 )
 
 type NewBlockRequest struct {
@@ -72,21 +73,30 @@ func mineBlockRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func newTransaction(w http.ResponseWriter, r *http.Request) {
-    decoder := json.NewDecoder(r.Body)
 
-    var body NewTransactionRequest
-    err := decoder.Decode(&body)
+    if r.Method == "OPTIONS" {
+        w.Header().Set("Access-Control-Allow-Origin", "*")
+        w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
 
-	if err != nil {
-		panic(err)
-    }
-    
-    resp, errText, transaction := createNewTransaction(body.To, body.From, body.Amount)
-    if resp {
-        broadcastNewTransaction(transaction)
-        fmt.Fprintf(w, "Added to transaction pool.")
+        fmt.Fprintf(w, "OK")
     } else {
-        fmt.Fprintf(w, errText)
+        decoder := json.NewDecoder(r.Body)
+
+        var body NewTransactionRequest
+        err := decoder.Decode(&body)
+
+        if err != nil {
+            fmt.Println(err)
+            panic(err)
+        }
+        
+        resp, errText, transaction := createNewTransaction(body.To, body.From, body.Amount)
+        if resp {
+            broadcastNewTransaction(transaction)
+            fmt.Fprintf(w, "Added to transaction pool.")
+        } else {
+            fmt.Fprintf(w, errText)
+        }
     }
 }
 
@@ -138,6 +148,20 @@ func addPeer(w http.ResponseWriter, r *http.Request) {
     fmt.Fprintf(w, string(resp))
 }
 
+func getOwnAddress(w http.ResponseWriter, r *http.Request) {
+    type AddressRequest struct {
+        Address string `json:"address"`
+    }
+
+    resp, _ := json.Marshal(AddressRequest{Address: string(utils.PublicKeyToBytes(PublicKey))})
+
+    w.Header().Set("Access-Control-Allow-Origin", "*")
+    w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
+    w.Header().Set("Content-Type", "application/json")
+
+    fmt.Fprintf(w, string(resp))
+}
+
 var Peers []Peer
 var ThisPeer Peer
 
@@ -158,6 +182,8 @@ func node() {
     http.HandleFunc("/peer", addPeer)
     http.HandleFunc("/peer/block", newBlockFromPeer)
     http.HandleFunc("/peer/transaction", newTransactionFromPeer)
+
+    http.HandleFunc("/utils/getOwnAddress", getOwnAddress)
 
     port := "9090"
     if len(os.Args) > 1 {
