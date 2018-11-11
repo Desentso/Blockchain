@@ -9,6 +9,7 @@ export const postRequest = (url, data) => {
         },
         body: JSON.stringify(data)
     })
+    .then(resp => resp.json())
 }
 
 export const getRequest = (url) => {

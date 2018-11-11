@@ -162,6 +162,73 @@ func getOwnAddress(w http.ResponseWriter, r *http.Request) {
     fmt.Fprintf(w, string(resp))
 }
 
+func getBalance(w http.ResponseWriter, r *http.Request) {
+    type OwnBalanceRequest struct {
+        Balance int `json:"balance"`
+    }
+
+    balance := 0
+    ownAddress := string(utils.PublicKeyToBytes(PublicKey))
+
+    for _, txOut := range UnspentTransactionsOut {
+        if txOut.ToAddress ==  ownAddress{
+            balance += txOut.Amount
+        }
+    }
+
+    resp, _ := json.Marshal(OwnBalanceRequest{Balance: balance})
+
+    w.Header().Set("Access-Control-Allow-Origin", "*")
+    w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
+    w.Header().Set("Content-Type", "application/json")
+
+    fmt.Fprintf(w, string(resp))
+}
+
+func getTransactionsFor(w http.ResponseWriter, r *http.Request) {
+    type GetTransactionsRequest struct {
+        Address string `json:"address"`
+    }
+
+    if r.Method == "OPTIONS" {
+        w.Header().Set("Access-Control-Allow-Origin", "*")
+        w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
+
+        fmt.Fprintf(w, "OK")
+        return
+    } 
+
+    decoder := json.NewDecoder(r.Body)
+
+    var params GetTransactionsRequest
+    err := decoder.Decode(&params)
+
+    if err != nil {
+        fmt.Println(err)
+		panic(err)
+    }
+
+    address := params.Address
+    foundTransactions := []Transaction{}
+
+    for _, block := range Blockchain {
+        for _, transaction := range block.Transactions {
+            if transaction.Outputs[0].ToAddress == address {
+                foundTransactions = append(foundTransactions, transaction)
+                break
+            }
+        }
+    }
+
+    resp, _ := json.Marshal(foundTransactions)
+
+    w.Header().Set("Access-Control-Allow-Origin", "*")
+    w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
+    w.Header().Set("Content-Type", "application/json")
+
+    fmt.Fprintf(w, string(resp))
+}
+
 var Peers []Peer
 var ThisPeer Peer
 
@@ -184,6 +251,8 @@ func node() {
     http.HandleFunc("/peer/transaction", newTransactionFromPeer)
 
     http.HandleFunc("/utils/getOwnAddress", getOwnAddress)
+    http.HandleFunc("/utils/getBalance", getBalance)
+    http.HandleFunc("/utils/transactions", getTransactionsFor)
 
     port := "9090"
     if len(os.Args) > 1 {

@@ -179,9 +179,10 @@ func minerReward(address string) Transaction {
 	reward := TransactionOut{
 		Amount: BLOCK_REWARD_AMOUNT, 
 		ToAddress: address, 
-		Index: string(len(Blockchain)), 
+		Index: fmt.Sprintf("%d", len(Blockchain)), 
 		Unspent: true,
 	}
+
 	transactionsOut := []TransactionOut{reward}
 
 	var transaction Transaction

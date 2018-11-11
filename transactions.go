@@ -16,7 +16,7 @@ import (
 type TransactionOut struct {
 	Id string // Id of transaction
 	Index string // Used to make the hashes unique
-	ToAddress string // Address that to coins belong (Unspent) or are sent (When spending)
+	ToAddress string // Address that the coins belong to (Unspent) or are sent (When spending)
 	Amount int
 	Unspent bool // True means that the coins belong to ToAddress
 } 
@@ -158,7 +158,7 @@ func GetTransactionHash(transactionsOut []TransactionOut, transactionsIn []*Tran
 	combinedString := ""
 	
 	for _, txOut := range transactionsOut {
-		combinedString += (txOut.ToAddress + string(txOut.Amount))
+		combinedString += (txOut.ToAddress + string(txOut.Amount) + txOut.Index)
 	}
 
 	for _, txIn := range transactionsIn {

@@ -2,11 +2,10 @@ import React, {Component} from 'react';
 import styled from "styled-components"
 import {connect} from "react-redux"
 
-import Input from "../shared/Input"
-import WalletCard from "./WalletCard"
-import NewTransaction from './NewTransaction';
-import Balance from './Balance';
-import {loadData} from "../../stores/reducers/basicData"
+import NewTransaction from './NewTransaction'
+import Balance from './Balance'
+import Transactions from './Transactions'
+import {loadData, getBalance, getTransactions} from "../../stores/reducers/basicData"
 
 const FlexContainer = styled.div`
   display: flex;
@@ -22,12 +21,30 @@ const FlexElementContainer = styled.div`
 
 class Wallet extends Component {
 
+  constructor(props) {
+    super(props)
+
+    this.state = {
+      transactionsInited: false
+    }
+  }
+
   componentWillMount() {
     this.props.loadData()
+    this.props.getBalance()
   }
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.data.address && !this.state.transactionsInited) {
+      this.props.getTransactions()
+      this.setState({transactionsInited: true})
+    }
+  } 
 
   render() {
     console.log(this.props)
+    const {address, balance, transactions} = this.props.data
+
     return (
       <div>
         <div>
@@ -36,12 +53,10 @@ class Wallet extends Component {
 
         <FlexContainer>
           <FlexElementContainer>
-            <Balance />
-            <NewTransaction ownAddress={this.props.data.address} />
+            <Balance balance={balance} />
+            <NewTransaction ownAddress={address} />
           </FlexElementContainer>
-          <WalletCard>
-            <h3>Latest Transactions</h3>
-          </WalletCard>
+          <Transactions transactions={transactions} ownAddress={address} />
         </FlexContainer>
       </div>
     )
@@ -53,7 +68,9 @@ const mapStateToProps = state => ({
 })
 
 const mapDispatchToProps = {
-  loadData
+  loadData,
+  getBalance,
+  getTransactions
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(Wallet)

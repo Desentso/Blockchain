@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
 import styled from "styled-components"
+
 import Input from "../shared/Input"
 import WalletCard from "./WalletCard"
 import Button from "../shared/Button"
@@ -38,12 +39,14 @@ const InlineLabels = styled.div`
 class NewTransaction extends Component {
   constructor(props) {
     super(props)
-    this.state = {
+    this.initialState = {
       address: "",
       amount: 0,
       fees: 0,
       total: 0
     }
+
+    this.state = this.initialState
   }
 
   addressOnChange = e => this.setState({address: e.target.value})
@@ -64,6 +67,12 @@ class NewTransaction extends Component {
     if (address && amount && amount > 0) {
       console.log("post")
       postRequest("/newTransaction", {from: ownAddress, to: address, amount: parseInt(amount)})
+      .then(resp => {
+        if (resp.status === 200) {
+          this.setState(this.initialState)
+        }
+      })
+      
     } else {
       this.setState({error: "Invalid address"})
     }
