@@ -34,16 +34,21 @@ class Wallet extends Component {
     this.props.getBalance()
   }
 
+  componentWillUnmount() {
+    this.state.removeTimer()
+  }
+
   componentWillReceiveProps(nextProps) {
     if (nextProps.data.address && !this.state.transactionsInited) {
       this.props.getTransactions()
-      this.setState({transactionsInited: true})
+      const removeInterval= window.setInterval(this.props.getTransactions, 10000)
+      this.setState({transactionsInited: true, removeInterval})
     }
   } 
 
   render() {
     console.log(this.props)
-    const {address, balance, transactions} = this.props.data
+    const {address, balance, finishedTransactions, pendingTransactions} = this.props.data
 
     return (
       <div>
@@ -56,7 +61,7 @@ class Wallet extends Component {
             <Balance balance={balance} />
             <NewTransaction ownAddress={address} />
           </FlexElementContainer>
-          <Transactions transactions={transactions} ownAddress={address} />
+          <Transactions transactions={finishedTransactions} pendingTransactions={pendingTransactions} ownAddress={address} />
         </FlexContainer>
       </div>
     )

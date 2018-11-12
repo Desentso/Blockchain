@@ -31,6 +31,8 @@ type Transaction struct {
 	Id string
 	Inputs []TransactionIn
 	Outputs []TransactionOut
+	From string
+	To string
 }
 
 var UnspentTransactionsOut []TransactionOut
@@ -72,6 +74,9 @@ func createNewTransaction(to string, from string, amount int) (bool, string, Tra
 		transaction.Id = GetTransactionHash(transactionsOut, unSignedTransactionsIn)
 
 		transaction.Inputs = signTransactionsIn(transaction, unSignedTransactionsIn)
+
+		transaction.From = from
+		transaction.To = to
 
 		if ValidateTransaction(transaction) && ValidTransactionToPool(transaction) {
 			PendingTransactions = append(PendingTransactions, transaction)

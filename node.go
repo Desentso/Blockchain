@@ -209,18 +209,33 @@ func getTransactionsFor(w http.ResponseWriter, r *http.Request) {
     }
 
     address := params.Address
-    foundTransactions := []Transaction{}
+    finishedTransactions := []Transaction{}
+    pendingTransactions := []Transaction{}
 
     for _, block := range Blockchain {
         for _, transaction := range block.Transactions {
             if transaction.Outputs[0].ToAddress == address {
-                foundTransactions = append(foundTransactions, transaction)
+                finishedTransactions = append(finishedTransactions, transaction)
                 break
             }
         }
     }
 
-    resp, _ := json.Marshal(foundTransactions)
+    for _, transaction := range PendingTransactions {
+        if transaction.Outputs[0].ToAddress == address {
+            pendingTransactions = append(pendingTransactions, transaction)
+            break
+        }
+    }
+
+    type GetTransactionsResponse struct {
+        Finished []Transaction `json:"finished"`
+        Pending []Transaction `json:"pending"`
+    }
+
+    response := GetTransactionsResponse{Finished: finishedTransactions, Pending: pendingTransactions}
+
+    resp, _ := json.Marshal(response)
 
     w.Header().Set("Access-Control-Allow-Origin", "*")
     w.Header().Add("Access-Control-Allow-Headers", "Content-Type")

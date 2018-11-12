@@ -50,7 +50,8 @@ export default (state = initialState, action) => {
     case TRANSACTIONS_GET_SUCCESS:
       return {
         ...state,
-        transactions: action.transactions
+        finishedTransactions: action.transactions.finished,
+        pendingTransactions: action.transactions.pending
       }
 
     case TRANSACTIONS_GET_ERROR:

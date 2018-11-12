@@ -12,7 +12,7 @@ class Transactions extends Component {
         <h3>Latest Transactions</h3>
         {transactions 
           ? transactions.map(transaction => (
-            <Transaction transaction={transaction} ownAddress={ownAddress} />
+            <Transaction transaction={transaction} ownAddress={ownAddress} key={transaction.Id} />
           ))
           : null
         }
