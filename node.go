@@ -214,17 +214,15 @@ func getTransactionsFor(w http.ResponseWriter, r *http.Request) {
 
     for _, block := range Blockchain {
         for _, transaction := range block.Transactions {
-            if transaction.Outputs[0].ToAddress == address {
+            if transaction.To == address || transaction.From == address {
                 finishedTransactions = append(finishedTransactions, transaction)
-                break
             }
         }
     }
 
     for _, transaction := range PendingTransactions {
-        if transaction.Outputs[0].ToAddress == address {
+        if transaction.To == address || transaction.From == address {
             pendingTransactions = append(pendingTransactions, transaction)
-            break
         }
     }
 

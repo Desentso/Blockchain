@@ -8,20 +8,28 @@ const Container = styled.div`
 `
 
 const Amount = styled.span`
-  color: green;
+  color: ${props => props.receivedTransaction
+    ? "green"
+    : "red"
+  };
 `
 
 class Transaction extends Component {
   render() {
-    const {transaction, ownAddress} = this.props
+    const {transaction, ownAddress, pending} = this.props
 
-    const total = transaction.Outputs.reduce((total, output) => output.ToAddress === ownAddress ? total + output.Amount : total, 0)
+    const receivedTransaction = transaction.to === ownAddress
+
+    const total = receivedTransaction
+      ? transaction.outputs.reduce((total, output) => output.toAddress === ownAddress ? total + output.amount : total, 0)
+      : transaction.outputs.reduce((total, output) => output.toAddress !== ownAddress ? total + output.amount : total, 0)
 
     return (
       <Container>
-        <Amount>+ {total} coins</Amount>
-        <span>12/11/2018 01:13</span>
-        <span>{transaction.Id}</span>
+        <Amount receivedTransaction={receivedTransaction}>{receivedTransaction ? "+" : "-"} {total} coins</Amount>
+        <span>{new Date(transaction.timestamp).toISOString()}</span>
+        <span>{transaction.id}</span>
+        <span>{pending ? "Pending" : "Finished"}</span>
       </Container>
     )
   }

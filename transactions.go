@@ -14,25 +14,26 @@ import (
 //https://gist.github.com/miguelmota/3ea9286bd1d3c2a985b67cac4ba2130a
 
 type TransactionOut struct {
-	Id string // Id of transaction
-	Index string // Used to make the hashes unique
-	ToAddress string // Address that the coins belong to (Unspent) or are sent (When spending)
-	Amount int
-	Unspent bool // True means that the coins belong to ToAddress
+	Id string 		 `json:"id"` // Id of transaction 
+	Index string 	 `json:"index"` // Used to make the hashes unique
+	ToAddress string `json:"toAddress"` // Address that the coins belong to (Unspent) or are sent (When spending)
+	Amount int		 `json:"amount"`
+	Unspent bool 	 `json:"unspent"`// True means that the coins belong to ToAddress
 } 
 
 type TransactionIn struct {
-	TransactionOutId string
-	TransactionOutIndex string
-	Signature string
+	TransactionOutId string    `json:"transactionOutId"`
+	TransactionOutIndex string `json:"transactionOutIndex"`
+	Signature string		   `json:"signature"`
 }
 
 type Transaction struct {
-	Id string
-	Inputs []TransactionIn
-	Outputs []TransactionOut
-	From string
-	To string
+	Id string 				 `json:"id"`
+	Inputs []TransactionIn   `json:"inputs"`
+	Outputs []TransactionOut `json:"outputs"`
+	From string 			 `json:"from"`
+	To string 				 `json:"to"`
+	Timestamp int64			 `json:"timestamp"`
 }
 
 var UnspentTransactionsOut []TransactionOut
@@ -77,6 +78,7 @@ func createNewTransaction(to string, from string, amount int) (bool, string, Tra
 
 		transaction.From = from
 		transaction.To = to
+		transaction.Timestamp = getTimestamp()
 
 		if ValidateTransaction(transaction) && ValidTransactionToPool(transaction) {
 			PendingTransactions = append(PendingTransactions, transaction)

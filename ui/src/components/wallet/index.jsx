@@ -2,7 +2,8 @@ import React, {Component} from 'react';
 import styled from "styled-components"
 import {connect} from "react-redux"
 
-import NewTransaction from './NewTransaction'
+import SendNewTransaction from './NewTransaction'
+import ReceiveTransaction from './ReceiveTransaction'
 import Balance from './Balance'
 import Transactions from './Transactions'
 import {loadData, getBalance, getTransactions} from "../../stores/reducers/basicData"
@@ -16,6 +17,7 @@ const FlexContainer = styled.div`
 
 const FlexElementContainer = styled.div`
   flex-grow: 1;
+  max-width: 950px;
 `
 
 
@@ -35,13 +37,14 @@ class Wallet extends Component {
   }
 
   componentWillUnmount() {
-    this.state.removeTimer()
+    window.clearInterval(this.state.removeInterval)
   }
 
   componentWillReceiveProps(nextProps) {
+    const {getTransactions, getBalance} = this.props
     if (nextProps.data.address && !this.state.transactionsInited) {
-      this.props.getTransactions()
-      const removeInterval= window.setInterval(this.props.getTransactions, 10000)
+      getTransactions()
+      const removeInterval = window.setInterval(() => {getTransactions(); getBalance()}, 2000)
       this.setState({transactionsInited: true, removeInterval})
     }
   } 
@@ -59,7 +62,8 @@ class Wallet extends Component {
         <FlexContainer>
           <FlexElementContainer>
             <Balance balance={balance} />
-            <NewTransaction ownAddress={address} />
+            <SendNewTransaction ownAddress={address} />
+            <ReceiveTransaction ownAddress={address} />
           </FlexElementContainer>
           <Transactions transactions={finishedTransactions} pendingTransactions={pendingTransactions} ownAddress={address} />
         </FlexContainer>

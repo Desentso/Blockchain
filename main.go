@@ -189,7 +189,9 @@ func minerReward(address string) Transaction {
 	transaction.Outputs = transactionsOut
 	transaction.Inputs = []TransactionIn{}
 	transaction.Id = GetTransactionHash(transactionsOut, []*TransactionIn{})
-
+	transaction.To = address
+	transaction.Timestamp = getTimestamp()
+	
 	return transaction
 }
 
