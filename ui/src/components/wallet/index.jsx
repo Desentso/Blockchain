@@ -50,7 +50,6 @@ class Wallet extends Component {
   } 
 
   render() {
-    console.log(this.props)
     const {address, balance, finishedTransactions, pendingTransactions} = this.props.data
 
     return (

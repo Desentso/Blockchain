@@ -36,6 +36,14 @@ const InlineLabels = styled.div`
   justify-content: space-around;
 `
 
+const SuccessMsg = styled.p`
+  color: green;
+`
+
+const ErrorMsg = styled.p`
+  color: red;
+`
+
 class NewTransaction extends Component {
   constructor(props) {
     super(props)
@@ -43,7 +51,9 @@ class NewTransaction extends Component {
       address: "",
       amount: 0,
       fees: 0,
-      total: 0
+      total: 0,
+      errorMsg: null,
+      successMsg: null
     }
 
     this.state = this.initialState
@@ -62,15 +72,31 @@ class NewTransaction extends Component {
     const {address, amount} = this.state
     const {ownAddress} = this.props
 
-    console.log(address, amount)
-
     if (address && amount && amount > 0) {
-      console.log("post")
+      this.setState({
+        successMsg: null,
+        errorMsg: null
+      })
+
       postRequest("/newTransaction", {from: ownAddress, to: address, amount: parseInt(amount)})
       .then(resp => {
-        if (resp.status === 200) {
-          this.setState(this.initialState)
+        if (resp.error) {
+          this.setState({
+            errorMsg: "Failed to send the transaction. You might have already transactions pending or you don't have enough balance."
+          })
+        } else {
+          this.setState({
+            ...this.initialState,
+            successMsg: "Succesfully sent the transaction to pool."
+          })
         }
+      })
+      .catch(e => {
+        console.log(e)
+        this.setState({
+          ...this.initialState,
+          errorMsg: "Failed to send the transaction. You might have already transactions pending or you don't have enough balance."
+        })
       })
       
     } else {
@@ -80,7 +106,7 @@ class NewTransaction extends Component {
 
   render() {
 
-    const {address, amount, fees, total} = this.state
+    const {address, amount, fees, total, successMsg, errorMsg} = this.state
 
     return (
       <WalletCard>
@@ -104,6 +130,8 @@ class NewTransaction extends Component {
           </InlineLabels>
         </InputContainer>
         <Button onClick={this.sendNewPayment}>Send</Button>
+        <SuccessMsg>{successMsg ? successMsg : ""}</SuccessMsg>
+        <ErrorMsg>{errorMsg ? errorMsg : ""}</ErrorMsg>
       </WalletCard>
     )
   }

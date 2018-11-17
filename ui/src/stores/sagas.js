@@ -5,6 +5,8 @@ import {
   TRANSACTIONS_GET, getTransactionsRequest
 } from "./reducers/basicData"
 
+import {BLOCKCHAIN_LOAD, getBlockchainRequest} from "./reducers/blockchain"
+
 function * loadDataSaga() {
   yield takeEvery(DATA_LOAD, loadDataRequest)
 }
@@ -17,10 +19,15 @@ function * getTransactionsSaga() {
   yield takeEvery(TRANSACTIONS_GET, getTransactionsRequest)
 }
 
+function * getBlockchainSaga() {
+  yield takeEvery(BLOCKCHAIN_LOAD, getBlockchainRequest)
+}
+
 export default function * root () {
   yield all([
     loadDataSaga(),
     getBalanceSaga(),
-    getTransactionsSaga()
+    getTransactionsSaga(),
+    getBlockchainSaga()
   ])
 }

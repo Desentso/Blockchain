@@ -1,6 +1,8 @@
 import React, {Component} from 'react';
 import styled from "styled-components"
 
+import {formatTimestamp} from "../../utils/time"
+
 const Container = styled.div`
   display: flex;
   justify-content: space-between;
@@ -27,7 +29,7 @@ class Transaction extends Component {
     return (
       <Container>
         <Amount receivedTransaction={receivedTransaction}>{receivedTransaction ? "+" : "-"} {total} coins</Amount>
-        <span>{new Date(transaction.timestamp).toISOString()}</span>
+        <span>{formatTimestamp(transaction.timestamp)}</span>
         <span>{transaction.id}</span>
         <span>{pending ? "Pending" : "Finished"}</span>
       </Container>

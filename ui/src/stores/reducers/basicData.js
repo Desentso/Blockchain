@@ -88,7 +88,6 @@ export function * getBalanceRequest() {
 export function * getTransactionsRequest() {
   try {
     const state = yield select()
-    console.log("STATE:", state)
     const resp = yield call(postRequest, "/utils/transactions", {address: state.data.address})
 
     yield put({type: TRANSACTIONS_GET_SUCCESS, transactions: resp})

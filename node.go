@@ -43,6 +43,9 @@ func getBlockchain(w http.ResponseWriter, r *http.Request) {
 
     resp, _ := json.Marshal(Blockchain)
 
+    w.Header().Set("Access-Control-Allow-Origin", "*")
+    w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
+
     fmt.Fprintf(w, string(resp))
 }
 
@@ -74,10 +77,15 @@ func mineBlockRequest(w http.ResponseWriter, r *http.Request) {
 
 func newTransaction(w http.ResponseWriter, r *http.Request) {
 
-    if r.Method == "OPTIONS" {
-        w.Header().Set("Access-Control-Allow-Origin", "*")
-        w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
+    type Response struct {
+        Error bool `json:"error"`
+        Msg string `json:"msg"`
+    }
 
+    w.Header().Set("Access-Control-Allow-Origin", "*")
+    w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
+
+    if r.Method == "OPTIONS" {
         fmt.Fprintf(w, "OK")
     } else {
         decoder := json.NewDecoder(r.Body)
@@ -93,9 +101,11 @@ func newTransaction(w http.ResponseWriter, r *http.Request) {
         resp, errText, transaction := createNewTransaction(body.To, body.From, body.Amount)
         if resp {
             broadcastNewTransaction(transaction)
-            fmt.Fprintf(w, "Added to transaction pool.")
+            jsonResp, _ := json.Marshal(Response{Error: false, Msg: "Success, added to the transaction pool."})
+            fmt.Fprintf(w, string(jsonResp))
         } else {
-            fmt.Fprintf(w, errText)
+            jsonResp, _ := json.Marshal(Response{Error: true, Msg: errText})
+            fmt.Fprintf(w, string(jsonResp))
         }
     }
 }
