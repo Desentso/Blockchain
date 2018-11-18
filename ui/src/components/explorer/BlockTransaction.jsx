@@ -15,19 +15,23 @@ const FlexCard = styled(Card)`
 const Flex = styled.div`
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: space-around;
   border: 1px solid #ddd;
   border-left: 5px solid #ddd;
   border-radius: 3px;
   margin: 20px 0;
+  flex-wrap: wrap;
 `
 
 const TxContainer = styled.div`
   width: 47%;
+  min-width: 200px;
+  flex-grow: 5;
 `
 
 const Address = styled.h4`
   white-space: pre-wrap;
+  word-break: break-word;
 `
 
 const ToIcon = styled.span`

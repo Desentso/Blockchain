@@ -5,6 +5,7 @@
 .App {
   text-align: center;
   background-color: rgb(248, 247, 243);
+  min-height: 100vh;
 }
 
 .Header {

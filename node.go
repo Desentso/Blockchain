@@ -43,9 +43,6 @@ func getBlockchain(w http.ResponseWriter, r *http.Request) {
 
     resp, _ := json.Marshal(Blockchain)
 
-    w.Header().Set("Access-Control-Allow-Origin", "*")
-    w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
-
     fmt.Fprintf(w, string(resp))
 }
 
@@ -56,11 +53,11 @@ func mineBlockRequest(w http.ResponseWriter, r *http.Request) {
     var body NewBlockRequest
     err := decoder.Decode(&body)
 
-	if err != nil {
-		panic(err)
-	}
+    if err != nil {
+        panic(err)
+    }
 
-	//fmt.Println(body.Data)
+    //fmt.Println(body.Data)
 
     newBlock := mineBlock(body.Data)
     if addBlockToChain(newBlock) {
@@ -73,6 +70,7 @@ func mineBlockRequest(w http.ResponseWriter, r *http.Request) {
     } else {
         fmt.Fprintf(w, "Invalid block")
     }
+    
 }
 
 func newTransaction(w http.ResponseWriter, r *http.Request) {
@@ -81,32 +79,24 @@ func newTransaction(w http.ResponseWriter, r *http.Request) {
         Error bool `json:"error"`
         Msg string `json:"msg"`
     }
+    decoder := json.NewDecoder(r.Body)
 
-    w.Header().Set("Access-Control-Allow-Origin", "*")
-    w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
+    var body NewTransactionRequest
+    err := decoder.Decode(&body)
 
-    if r.Method == "OPTIONS" {
-        fmt.Fprintf(w, "OK")
+    if err != nil {
+        fmt.Println(err)
+        panic(err)
+    }
+    
+    resp, errText, transaction := createNewTransaction(body.To, body.From, body.Amount)
+    if resp {
+        broadcastNewTransaction(transaction)
+        jsonResp, _ := json.Marshal(Response{Error: false, Msg: "Success, added to the transaction pool."})
+        fmt.Fprintf(w, string(jsonResp))
     } else {
-        decoder := json.NewDecoder(r.Body)
-
-        var body NewTransactionRequest
-        err := decoder.Decode(&body)
-
-        if err != nil {
-            fmt.Println(err)
-            panic(err)
-        }
-        
-        resp, errText, transaction := createNewTransaction(body.To, body.From, body.Amount)
-        if resp {
-            broadcastNewTransaction(transaction)
-            jsonResp, _ := json.Marshal(Response{Error: false, Msg: "Success, added to the transaction pool."})
-            fmt.Fprintf(w, string(jsonResp))
-        } else {
-            jsonResp, _ := json.Marshal(Response{Error: true, Msg: errText})
-            fmt.Fprintf(w, string(jsonResp))
-        }
+        jsonResp, _ := json.Marshal(Response{Error: true, Msg: errText})
+        fmt.Fprintf(w, string(jsonResp))
     }
 }
 
@@ -165,8 +155,6 @@ func getOwnAddress(w http.ResponseWriter, r *http.Request) {
 
     resp, _ := json.Marshal(AddressRequest{Address: string(utils.PublicKeyToBytes(PublicKey))})
 
-    w.Header().Set("Access-Control-Allow-Origin", "*")
-    w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
     w.Header().Set("Content-Type", "application/json")
 
     fmt.Fprintf(w, string(resp))
@@ -188,8 +176,6 @@ func getBalance(w http.ResponseWriter, r *http.Request) {
 
     resp, _ := json.Marshal(OwnBalanceRequest{Balance: balance})
 
-    w.Header().Set("Access-Control-Allow-Origin", "*")
-    w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
     w.Header().Set("Content-Type", "application/json")
 
     fmt.Fprintf(w, string(resp))
@@ -199,14 +185,6 @@ func getTransactionsFor(w http.ResponseWriter, r *http.Request) {
     type GetTransactionsRequest struct {
         Address string `json:"address"`
     }
-
-    if r.Method == "OPTIONS" {
-        w.Header().Set("Access-Control-Allow-Origin", "*")
-        w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
-
-        fmt.Fprintf(w, "OK")
-        return
-    } 
 
     decoder := json.NewDecoder(r.Body)
 
@@ -245,11 +223,23 @@ func getTransactionsFor(w http.ResponseWriter, r *http.Request) {
 
     resp, _ := json.Marshal(response)
 
-    w.Header().Set("Access-Control-Allow-Origin", "*")
-    w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
     w.Header().Set("Content-Type", "application/json")
 
     fmt.Fprintf(w, string(resp))
+}
+
+func CORSHandler(h http.Handler) http.Handler {
+
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        w.Header().Set("Access-Control-Allow-Origin", "*")
+        w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
+
+        if r.Method == "OPTIONS" {
+            fmt.Fprintf(w, "OK")
+        } else {
+            h.ServeHTTP(w, r)
+        }
+    })
 }
 
 var Peers []Peer
@@ -261,21 +251,21 @@ func node() {
 
      // Set routes
     http.HandleFunc("/", index)
-    http.HandleFunc("/blockchain", getBlockchain)
-    http.HandleFunc("/mineblock", mineBlockRequest)
-    http.HandleFunc("/newTransaction", newTransaction)
+    http.Handle("/blockchain", CORSHandler(http.HandlerFunc(getBlockchain)))
+    http.Handle("/mineblock", CORSHandler(http.HandlerFunc(mineBlockRequest)))
+    http.Handle("/newTransaction", CORSHandler(http.HandlerFunc(newTransaction)))
     http.HandleFunc("/transactions", getTransactionPool)
     http.HandleFunc("/balances", getBalances)
 
     http.HandleFunc("/peers", getPeers)
 
-    http.HandleFunc("/peer", addPeer)
+    http.Handle("/peer", CORSHandler(http.HandlerFunc(addPeer)))
     http.HandleFunc("/peer/block", newBlockFromPeer)
     http.HandleFunc("/peer/transaction", newTransactionFromPeer)
 
-    http.HandleFunc("/utils/getOwnAddress", getOwnAddress)
-    http.HandleFunc("/utils/getBalance", getBalance)
-    http.HandleFunc("/utils/transactions", getTransactionsFor)
+    http.Handle("/utils/getOwnAddress", CORSHandler(http.HandlerFunc(getOwnAddress)))
+    http.Handle("/utils/getBalance", CORSHandler(http.HandlerFunc(getBalance)))
+    http.Handle("/utils/transactions", CORSHandler(http.HandlerFunc(getTransactionsFor)))
 
     port := "9090"
     if len(os.Args) > 1 {

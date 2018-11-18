@@ -18,6 +18,7 @@ const Flex = styled.div`
 
 const Label = styled.p`
   font-weight: 600;
+  min-width: 200px;
 `
 
 const BlockHashLabel = styled(Label)`
@@ -47,7 +48,7 @@ class Blocks extends Component {
         {blockchain
           ? blockchain.sort((a,b) => b.timestamp - a.timestamp)
             .map(block => 
-              <Block block={block} />
+              <Block block={block} key={block.hash} />
             )
           : null
         }

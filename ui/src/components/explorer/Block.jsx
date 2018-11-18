@@ -5,6 +5,10 @@ import {formatTimestamp} from "../../utils/time"
 import Card from "../shared/Card"
 import BlockTransaction from './BlockTransaction';
 
+const Container = styled(Card)`
+  border-left: 7px solid #4353fe;
+`
+
 const Flex = styled.div`
   display: flex;
   justify-content: space-between;
@@ -16,6 +20,7 @@ const Flex = styled.div`
 
 const Title = styled.h4`
   margin: 0;
+  word-break: break-word;
 `
 
 const Expanded = styled.div`
@@ -40,7 +45,7 @@ class Block extends Component {
     const {expanded} = this.state
 
     return (
-      <Card>
+      <Container>
         <Flex onClick={this.toggleExpand}>
           <Title>{block.index}</Title>
           <Title>{block.hash}</Title>
@@ -51,14 +56,14 @@ class Block extends Component {
           ? <Expanded>
               {block.transactions
                 ? block.transactions.map(tx => 
-                    <BlockTransaction transaction={tx} />
+                    <BlockTransaction transaction={tx} key={tx.id} />
                   )
                 : "No transactions"
               }
             </Expanded>
           : null
         }
-      </Card>
+      </Container>
     )
   }
 }

@@ -12,13 +12,13 @@ class Transactions extends Component {
         <h3>Latest Transactions</h3>
         {pendingTransactions 
           ? pendingTransactions.sort((a,b) => b.timestamp - a.timestamp).map(transaction => (
-            <Transaction transaction={transaction} ownAddress={ownAddress} key={transaction.Id} pending />
+            <Transaction transaction={transaction} ownAddress={ownAddress} key={transaction.id} pending />
           ))
           : null
         }
         {transactions 
           ? transactions.sort((a,b) => b.timestamp - a.timestamp).map(transaction => (
-            <Transaction transaction={transaction} ownAddress={ownAddress} key={transaction.Id} />
+            <Transaction transaction={transaction} ownAddress={ownAddress} key={transaction.id} />
           ))
           : null
         }

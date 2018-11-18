@@ -5,6 +5,7 @@ import WalletCard from "./WalletCard"
 
 const Address = styled.h4`
   white-space: pre-wrap;
+  word-break: break-all;
 `
 
 class ReceiveTransaction extends Component {

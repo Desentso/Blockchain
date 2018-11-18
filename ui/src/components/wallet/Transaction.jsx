@@ -7,6 +7,7 @@ const Container = styled.div`
   display: flex;
   justify-content: space-between;
   margin-bottom: 8px;
+  flex-wrap: wrap;
 `
 
 const Amount = styled.span`
@@ -14,6 +15,10 @@ const Amount = styled.span`
     ? "green"
     : "red"
   };
+`
+
+const TransactionId = styled.span`
+  word-break: break-word;
 `
 
 class Transaction extends Component {
@@ -30,7 +35,7 @@ class Transaction extends Component {
       <Container>
         <Amount receivedTransaction={receivedTransaction}>{receivedTransaction ? "+" : "-"} {total} coins</Amount>
         <span>{formatTimestamp(transaction.timestamp)}</span>
-        <span>{transaction.id}</span>
+        <TransactionId>{transaction.id}</TransactionId>
         <span>{pending ? "Pending" : "Finished"}</span>
       </Container>
     )

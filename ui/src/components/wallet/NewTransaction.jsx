@@ -44,6 +44,10 @@ const ErrorMsg = styled.p`
   color: red;
 `
 
+const SendButton = styled(Button)`
+  margin-top: 15px;
+`
+
 class NewTransaction extends Component {
   constructor(props) {
     super(props)
@@ -129,7 +133,7 @@ class NewTransaction extends Component {
             </div>
           </InlineLabels>
         </InputContainer>
-        <Button onClick={this.sendNewPayment}>Send</Button>
+        <SendButton onClick={this.sendNewPayment}>Send</SendButton>
         <SuccessMsg>{successMsg ? successMsg : ""}</SuccessMsg>
         <ErrorMsg>{errorMsg ? errorMsg : ""}</ErrorMsg>
       </WalletCard>
