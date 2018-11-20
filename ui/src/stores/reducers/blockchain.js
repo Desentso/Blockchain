@@ -1,7 +1,9 @@
-import {getRequest, postRequest} from "../../utils/requests"
-import {call, put, select} from "redux-saga/effects"
+import {getRequest} from "../../utils/requests"
+import {call, put} from "redux-saga/effects"
 
-const initialState = {}
+const initialState = {
+  error: null
+}
 
 export const BLOCKCHAIN_LOAD = 'BLOCKCHAIN_LOAD'
 export const BLOCKCHAIN_LOAD_SUCCESS = 'BLOCKCHAIN_LOAD_SUCCESS'

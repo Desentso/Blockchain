@@ -1,8 +1,8 @@
 import React, {Component} from 'react';
 import styled from "styled-components"
 
-import Card from "../shared/Card"
 import Block from "./Block"
+import Err from "../shared/Error"
 
 const Container = styled.div`
   padding-bottom: 150px;
@@ -34,7 +34,7 @@ class Blocks extends Component {
   
   render() {
 
-    const {blockchain} = this.props
+    const {blockchain, error} = this.props
 
     return (
       <Container>
@@ -44,12 +44,14 @@ class Blocks extends Component {
           <Label>Timestamp</Label>
           <Label>No. of Transactions</Label>
         </Flex>
-        {blockchain
-          ? blockchain.sort((a,b) => b.timestamp - a.timestamp)
-            .map(block => 
-              <Block block={block} key={block.hash} />
-            )
-          : null
+        {error
+          ? <Err>{error}</Err>
+          : blockchain
+            ? blockchain.sort((a,b) => b.timestamp - a.timestamp)
+              .map(block => 
+                <Block block={block} key={block.hash} />
+              )
+            : null
         }
       </Container>
     )

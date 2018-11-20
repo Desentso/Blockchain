@@ -2,9 +2,7 @@ import React, {Component} from 'react'
 import styled from "styled-components"
 import {connect} from "react-redux"
 
-import Card from "../shared/Card"
 import Button from "../shared/Button"
-import Input from "../shared/Input"
 
 import {toggleMining} from "../../stores/reducers/mining"
 import {postRequest} from "../../utils/requests"
@@ -16,10 +14,6 @@ const Container = styled.div`
   margin: auto;
   flex-wrap: wrap;
   margin-top: 50px;
-`
-
-const Label = styled.label`
-  
 `
 
 class MineBlock extends Component {

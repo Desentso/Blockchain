@@ -1,6 +1,5 @@
 import React, {Component} from 'react'
 import {connect} from "react-redux"
-import {Link} from "react-router-dom"
 
 import {loadBlockchain} from "../../stores/reducers/blockchain"
 import Blocks from "./Blocks"
@@ -12,13 +11,13 @@ class Explorer extends Component {
   }
 
   render() {
-    const {blockchain} = this.props.blockchain
+    const {blockchain, error} = this.props.blockchain
 
     return (
       <div>
         <h1>Explorer</h1>
         <h3>Explore the blockchain</h3>
-        <Blocks blockchain={blockchain} />
+        <Blocks blockchain={blockchain} error={error} />
       </div>
     )
   }

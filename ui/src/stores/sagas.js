@@ -1,4 +1,4 @@
-import {all, takeLatest, takeEvery, take} from 'redux-saga/effects'
+import {all, takeEvery} from 'redux-saga/effects'
 import {
   DATA_LOAD, loadDataRequest, 
   BALANCE_GET, getBalanceRequest,

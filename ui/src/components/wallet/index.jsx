@@ -50,7 +50,15 @@ class Wallet extends Component {
   } 
 
   render() {
-    const {address, balance, finishedTransactions, pendingTransactions} = this.props.data
+    const {
+      address, 
+      balance, 
+      finishedTransactions, 
+      pendingTransactions,
+      addressError,
+      balanceError,
+      txsError
+    } = this.props.data
 
     return (
       <div>
@@ -60,11 +68,16 @@ class Wallet extends Component {
 
         <FlexContainer>
           <FlexElementContainer>
-            <Balance balance={balance} />
+            <Balance balance={balance} error={balanceError} />
             <SendNewTransaction ownAddress={address} />
-            <ReceiveTransaction ownAddress={address} />
+            <ReceiveTransaction ownAddress={address} error={addressError} />
           </FlexElementContainer>
-          <Transactions transactions={finishedTransactions} pendingTransactions={pendingTransactions} ownAddress={address} />
+          <Transactions 
+            transactions={finishedTransactions} 
+            pendingTransactions={pendingTransactions} 
+            ownAddress={address} 
+            error={txsError}
+          />
         </FlexContainer>
       </div>
     )

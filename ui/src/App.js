@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
-import { BrowserRouter, Route, Switch } from 'react-router-dom'
+import { BrowserRouter, Route } from 'react-router-dom'
 import { Provider } from 'react-redux'
-import { createStore } from 'redux'
 
 import './App.css';
 import Header from "./components/shared/Header"
@@ -10,7 +9,6 @@ import Wallet from "./components/wallet"
 import Explorer from "./components/explorer"
 import reduxStore from './stores'
 
-//const store = createStore(reduxStore)
 
 class App extends Component {
   render() {

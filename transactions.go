@@ -45,7 +45,6 @@ func transactionTest() {
 	PrivateKey = createNewPrivateKey()
 	PublicKey = &PrivateKey.PublicKey
 	fmt.Println(string(utils.PublicKeyToBytes(PublicKey)))
-	//fmt.Println(string(utils.PrivateKeyToBytes(PrivateKey)))
 
 }
 
@@ -142,7 +141,7 @@ func signTransactionsIn(transaction Transaction, unsigned []*TransactionIn) []Tr
 	values := []TransactionIn{}
 	for _, txIn := range unsigned {
 		signature := signTransactionIn(PrivateKey, transaction)
-		fmt.Println("Signature: ", signature)
+
 		txIn.Signature = signature
 		values = append(values, *txIn)
 	}
@@ -154,7 +153,7 @@ func signTransactionIn(PrivateKey *rsa.PrivateKey, transaction Transaction) stri
 	stringAsBytes := []byte(transaction.Id)
 	hash := sha256.Sum256(stringAsBytes)
 	signature, _ := rsa.SignPKCS1v15(rand.Reader, PrivateKey, crypto.SHA256, hash[:])
-	fmt.Println("Transaction ID:", transaction.Id, "\nHash: ", hash, "\nSignature:", hex.EncodeToString(signature))
+	
 	return hex.EncodeToString(signature)
 }
 

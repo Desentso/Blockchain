@@ -1,16 +1,6 @@
 import React, {Component} from 'react';
 import styled from "styled-components"
 
-import {formatTimestamp} from "../../utils/time"
-import Card from "../shared/Card"
-
-const FlexCard = styled(Card)`
-  display: flex;
-  justify-content: space-between;
-  padding: 25px 5%;
-  align-items: center;
-  flex-wrap: wrap;
-`
 
 const Flex = styled.div`
   display: flex;

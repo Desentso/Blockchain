@@ -1,7 +1,11 @@
 import {getRequest, postRequest} from "../../utils/requests"
 import {call, put, select} from "redux-saga/effects"
 
-const initialState = {abc: 123}
+const initialState = {
+  addressError: null,
+  balanceError: null,
+  txsError: null
+}
 
 export const DATA_LOAD = 'DATA_LOAD'
 export const DATA_LOAD_SUCCESS = 'DATA_LOAD_SUCCESS'
@@ -26,38 +30,41 @@ export default (state = initialState, action) => {
     case DATA_LOAD_SUCCESS:
       return {
         ...state,
-        address: action.address
+        address: action.address,
+        addressError: null
       }
 
     case DATA_LOAD_ERROR:
       return {
         ...state,
-        error: "Error while loading address"
+        addressError: "Error while loading address."
       }
 
     case BALANCE_GET_SUCCESS:
       return {
         ...state,
-        balance: action.balance
+        balance: action.balance,
+        balanceError: null
       }
 
     case BALANCE_GET_ERROR:
       return {
         ...state,
-        error: "Error while loading balance"
+        balanceError: "Error while loading balance."
       }
 
     case TRANSACTIONS_GET_SUCCESS:
       return {
         ...state,
         finishedTransactions: action.transactions.finished,
-        pendingTransactions: action.transactions.pending
+        pendingTransactions: action.transactions.pending,
+        txsError: null
       }
 
     case TRANSACTIONS_GET_ERROR:
       return {
         ...state,
-        error: "Error while loading transactions"
+        txsError: "Error while loading transactions."
       }
 
     default:
