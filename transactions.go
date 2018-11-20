@@ -45,11 +45,8 @@ func transactionTest() {
 	PrivateKey = createNewPrivateKey()
 	PublicKey = &PrivateKey.PublicKey
 	fmt.Println(string(utils.PublicKeyToBytes(PublicKey)))
-	fmt.Println(string(utils.PrivateKeyToBytes(PrivateKey)))
+	//fmt.Println(string(utils.PrivateKeyToBytes(PrivateKey)))
 
-	//UnspentTransactionsOut = []TransactionOut{TransactionOut{Id: "id", Index: "index", ToAddress: "123", Amount: 100}}
-
-	//createNewTransaction("abc", "123", 100)
 }
 
 func createNewPrivateKey() *rsa.PrivateKey {

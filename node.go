@@ -5,6 +5,8 @@ import (
     "bytes"
     "net/http"
     "encoding/json"
+    "encoding/base64"
+    "strings"
     "os"
     "./utils"
 )
@@ -57,8 +59,6 @@ func mineBlockRequest(w http.ResponseWriter, r *http.Request) {
         panic(err)
     }
 
-    //fmt.Println(body.Data)
-
     newBlock := mineBlock(body.Data)
     if addBlockToChain(newBlock) {
 
@@ -88,8 +88,14 @@ func newTransaction(w http.ResponseWriter, r *http.Request) {
         fmt.Println(err)
         panic(err)
     }
-    
-    resp, errText, transaction := createNewTransaction(body.To, body.From, body.Amount)
+
+    toAddress := body.To
+    if !strings.Contains(body.To, "BEGIN RSA PUBLIC KEY") {
+        decoded, _ := base64.StdEncoding.DecodeString(body.To)
+        toAddress = string(decoded)
+    }
+
+    resp, errText, transaction := createNewTransaction(toAddress, body.From, body.Amount)
     if resp {
         broadcastNewTransaction(transaction)
         jsonResp, _ := json.Marshal(Response{Error: false, Msg: "Success, added to the transaction pool."})

@@ -18,7 +18,6 @@ const Flex = styled.div`
 
 const Label = styled.p`
   font-weight: 600;
-  min-width: 200px;
 `
 
 const BlockHashLabel = styled(Label)`
