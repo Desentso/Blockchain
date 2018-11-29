@@ -1,7 +1,5 @@
-const baseUrl = "http://localhost:9090"
-
 export const postRequest = (url, data) => {
-    return fetch(baseUrl + url, {
+    return fetch(url, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -13,7 +11,7 @@ export const postRequest = (url, data) => {
 }
 
 export const getRequest = (url) => {
-    return fetch(baseUrl + url, {
+    return fetch(url, {
         method: "GET",
         headers: {
             "Content-Type": "application/json",

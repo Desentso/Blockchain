@@ -23,8 +23,6 @@ class ReceiveTransaction extends Component {
     selection.removeAllRanges();
     selection.addRange(range);
 
-    console.log(selection, range)
-
     document.execCommand('copy');
 
     this.setState({

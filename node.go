@@ -255,8 +255,12 @@ func node() {
 
     Peers = []Peer{}
 
+    fileServer := http.FileServer(http.Dir("./ui/build"))
+
+    http.Handle("/", fileServer)
+
      // Set routes
-    http.HandleFunc("/", index)
+    //http.HandleFunc("/", index)
     http.Handle("/blockchain", CORSHandler(http.HandlerFunc(getBlockchain)))
     http.Handle("/mineblock", CORSHandler(http.HandlerFunc(mineBlockRequest)))
     http.Handle("/newTransaction", CORSHandler(http.HandlerFunc(newTransaction)))
@@ -272,6 +276,7 @@ func node() {
     http.Handle("/utils/getOwnAddress", CORSHandler(http.HandlerFunc(getOwnAddress)))
     http.Handle("/utils/getBalance", CORSHandler(http.HandlerFunc(getBalance)))
     http.Handle("/utils/transactions", CORSHandler(http.HandlerFunc(getTransactionsFor)))
+
 
     port := "9090"
     if len(os.Args) > 1 {
