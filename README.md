@@ -40,4 +40,4 @@ Blockchain.exe
 ```
 
 Now everything should be working and running, you can access the app at http://localhost:9090
-If you want to run the app on different port you can start it like this `Blockchain.exe PORT_NUMBER` e.g. `Blockchain.exe 9091`
+If you want to run the app on different port you can start it like this `Blockchain.exe PORT_NUMBER` e.g. to run it on port 9091 `Blockchain.exe 9091`
